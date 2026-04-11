@@ -1,7 +1,7 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { projects, extractedTokens, generatedPrompts } from "@/db/schema";
+import { getAuthUserId } from "@/lib/auth";
 import { eq, and, desc } from "drizzle-orm";
 import { generateMarkdown } from "@/lib/prompt-generator/generate-markdown";
 import type { AggregatedTokens } from "@/lib/extraction/types";
@@ -10,14 +10,9 @@ export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  const userId = await getAuthUserId();
   const { id } = await params;
 
-  // Verify ownership
   const project = await db.query.projects.findFirst({
     where: and(eq(projects.id, id), eq(projects.userId, userId)),
   });
@@ -37,7 +32,6 @@ export async function POST(
     );
   }
 
-  // Get the latest version number
   const latestPrompt = await db.query.generatedPrompts.findFirst({
     where: eq(generatedPrompts.projectId, id),
     orderBy: [desc(generatedPrompts.version)],
@@ -45,7 +39,6 @@ export async function POST(
 
   const newVersion = (latestPrompt?.version ?? 0) + 1;
 
-  // Reconstruct AggregatedTokens from stored data
   const aggregated: AggregatedTokens = {
     sourceUrls: project.urls as string[],
     cssVariables: tokens.rawCssVariables as Record<string, string>,

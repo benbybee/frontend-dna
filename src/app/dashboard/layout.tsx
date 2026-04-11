@@ -1,4 +1,3 @@
-import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Dna, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,6 @@ export default function DashboardLayout({
               <Plus className="h-4 w-4 mr-1" /> New Project
             </Button>
           </Link>
-          <UserButton />
         </div>
       </header>
 

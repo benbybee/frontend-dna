@@ -1,21 +1,16 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { projects, extractedTokens } from "@/db/schema";
+import { getAuthUserId } from "@/lib/auth";
 import { eq, and } from "drizzle-orm";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  const userId = await getAuthUserId();
   const { id } = await params;
 
-  // Verify ownership
   const project = await db.query.projects.findFirst({
     where: and(eq(projects.id, id), eq(projects.userId, userId)),
   });

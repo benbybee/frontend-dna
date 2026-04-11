@@ -1,16 +1,13 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { after } from "next/server";
 import { db } from "@/db";
 import { projects, scrapeJobs } from "@/db/schema";
 import { createProjectSchema } from "@/lib/validators";
+import { getAuthUserId } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const userId = await getAuthUserId();
 
   const body = await request.json();
   const parsed = createProjectSchema.safeParse(body);
@@ -65,10 +62,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const userId = await getAuthUserId();
 
   const userProjects = await db
     .select()

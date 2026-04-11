@@ -1,12 +1,8 @@
-"use client";
-
 import Link from "next/link";
-import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Dna, Pipette, Code, Download, ArrowRight } from "lucide-react";
 
 export default function LandingPage() {
-  const { isSignedIn } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -17,20 +13,9 @@ export default function LandingPage() {
           <span className="font-semibold text-lg tracking-tight">Frontend DNA</span>
         </div>
         <div>
-          {isSignedIn ? (
-            <Link href="/dashboard">
-              <Button>Dashboard <ArrowRight className="ml-2 h-4 w-4" /></Button>
-            </Link>
-          ) : (
-            <div className="flex gap-3">
-              <Link href="/sign-in">
-                <Button variant="ghost">Sign In</Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button>Get Started</Button>
-              </Link>
-            </div>
-          )}
+          <Link href="/dashboard">
+            <Button>Dashboard <ArrowRight className="ml-2 h-4 w-4" /></Button>
+          </Link>
         </div>
       </nav>
 
@@ -59,7 +44,7 @@ export default function LandingPage() {
             </p>
 
             <div className="flex gap-4 justify-center">
-              <Link href={isSignedIn ? "/dashboard/new" : "/sign-up"}>
+              <Link href="/dashboard/new">
                 <Button size="lg" className="h-12 px-8 text-base shadow-lg shadow-primary/20">
                   Start Extracting <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>

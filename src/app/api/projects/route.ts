@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { projects, scrapeJobs } from "@/db/schema";
 import { createProjectSchema } from "@/lib/validators";
 import { getAuthUserId } from "@/lib/auth";
+import { executeScrapeJob } from "@/lib/scrape-job";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
@@ -32,29 +33,10 @@ export async function POST(request: Request) {
     .values(urls.map((url) => ({ projectId: project.id, url })))
     .returning();
 
-  // Fire-and-forget: trigger scraping for each job
+  // Fire-and-forget: run extraction directly (no HTTP self-request)
   after(async () => {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
-
     for (const job of jobs) {
-      try {
-        await fetch(`${baseUrl}/api/internal/scrape`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-internal-secret": process.env.INTERNAL_API_SECRET!,
-          },
-          body: JSON.stringify({
-            jobId: job.id,
-            url: job.url,
-            projectId: project.id,
-          }),
-        });
-      } catch (error) {
-        console.error(`Failed to trigger scrape for ${job.url}:`, error);
-      }
+      await executeScrapeJob(job.id, job.url, project.id);
     }
   });
 

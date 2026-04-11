@@ -3,6 +3,7 @@ import { after } from "next/server";
 import { db } from "@/db";
 import { projects, scrapeJobs } from "@/db/schema";
 import { getAuthUserId } from "@/lib/auth";
+import { executeScrapeJob } from "@/lib/scrape-job";
 import { eq, and } from "drizzle-orm";
 
 export async function POST(
@@ -39,27 +40,8 @@ export async function POST(
   }
 
   after(async () => {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
-
     for (const job of failedJobs) {
-      try {
-        await fetch(`${baseUrl}/api/internal/scrape`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-internal-secret": process.env.INTERNAL_API_SECRET!,
-          },
-          body: JSON.stringify({
-            jobId: job.id,
-            url: job.url,
-            projectId: id,
-          }),
-        });
-      } catch (error) {
-        console.error(`Failed to retry scrape for ${job.url}:`, error);
-      }
+      await executeScrapeJob(job.id, job.url, id);
     }
   });
 

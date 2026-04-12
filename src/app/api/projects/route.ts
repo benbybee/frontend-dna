@@ -5,7 +5,7 @@ import { projects, scrapeJobs } from "@/db/schema";
 import { createProjectSchema } from "@/lib/validators";
 import { getAuthUserId } from "@/lib/auth";
 import { executeScrapeJob } from "@/lib/scrape-job";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 
 export async function POST(request: Request) {
   const userId = await getAuthUserId();
@@ -46,11 +46,44 @@ export async function POST(request: Request) {
 export async function GET() {
   const userId = await getAuthUserId();
 
-  const userProjects = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.userId, userId))
-    .orderBy(projects.createdAt);
+  const userProjects = await db.query.projects.findMany({
+    where: or(eq(projects.userId, userId), eq(projects.userId, "webhook")),
+    orderBy: (p, { desc }) => [desc(p.createdAt)],
+    with: {
+      scrapeJobs: {
+        columns: { id: true, status: true },
+      },
+      generatedPrompts: {
+        columns: { id: true },
+        limit: 1,
+      },
+    },
+  });
 
-  return NextResponse.json(userProjects);
+  // Enrich with status summary
+  const enriched = userProjects.map((p) => {
+    const total = p.scrapeJobs.length;
+    const completed = p.scrapeJobs.filter((j) => j.status === "completed").length;
+    const failed = p.scrapeJobs.filter((j) => j.status === "failed").length;
+    const allDone = total > 0 && completed + failed === total;
+    const hasPrompt = p.generatedPrompts.length > 0;
+    const isWebhook = p.userId === "webhook";
+
+    return {
+      id: p.id,
+      name: p.name,
+      urls: p.urls,
+      createdAt: p.createdAt,
+      status: {
+        total,
+        completed,
+        failed,
+        allDone,
+        hasPrompt,
+        isWebhook,
+      },
+    };
+  });
+
+  return NextResponse.json(enriched);
 }

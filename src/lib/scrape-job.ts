@@ -65,6 +65,7 @@ export async function executeScrapeJob(
             breakpoints: aggregated.breakpoints,
             motion: aggregated.motion,
             assets: aggregated.assets,
+            components: aggregated.components,
             rawCssVariables: aggregated.cssVariables,
           })
           .onConflictDoUpdate({
@@ -78,6 +79,7 @@ export async function executeScrapeJob(
               breakpoints: aggregated.breakpoints,
               motion: aggregated.motion,
               assets: aggregated.assets,
+              components: aggregated.components,
               rawCssVariables: aggregated.cssVariables,
             },
           })

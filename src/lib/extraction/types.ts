@@ -101,6 +101,7 @@ export interface RawTokens {
   breakpoints: BreakpointTokens;
   motion: MotionTokens;
   assets: AssetTokens;
+  components: ComponentTokens;
   extractedAt: string; // ISO timestamp
 }
 
@@ -116,6 +117,7 @@ export interface AggregatedTokens {
   breakpoints: BreakpointTokens;
   motion: MotionTokens;
   assets: AssetTokens;
+  components: ComponentTokens;
   conflicts: TokenConflict[];
 }
 
@@ -123,4 +125,71 @@ export interface TokenConflict {
   variable: string;
   values: { url: string; value: string }[];
   resolved: string; // the value we chose
+}
+
+// ── Component Tokens ──────────────────────────────────────────────────────────
+
+export interface ComponentStyle {
+  background: string;
+  color: string;
+  padding: string;
+  borderRadius: string;
+  border: string;
+  fontSize: string;
+  fontWeight: string;
+  fontFamily: string;
+  lineHeight: string;
+  boxShadow: string;
+  cursor: string;
+  textTransform: string;
+  letterSpacing: string;
+  transition: string;
+}
+
+export interface ButtonComponent {
+  variant: string; // "primary", "secondary", "ghost", "outline"
+  selector: string; // CSS selector or description
+  default: Partial<ComponentStyle>;
+  hover?: Partial<ComponentStyle>;
+  text: string; // visible button text
+}
+
+export interface CardComponent {
+  selector: string;
+  styles: Partial<ComponentStyle>;
+}
+
+export interface InputComponent {
+  type: string; // "text", "email", "select", etc.
+  selector: string;
+  default: Partial<ComponentStyle>;
+  focus?: Partial<ComponentStyle>;
+  placeholder: string;
+  labelStyles?: Partial<ComponentStyle>;
+}
+
+export interface NavComponent {
+  position: string;
+  background: string;
+  backdropFilter: string;
+  linkStyles: Partial<ComponentStyle>;
+  ctaStyles?: Partial<ComponentStyle>;
+  height: string;
+  borderBottom: string;
+}
+
+export interface ComponentTokens {
+  buttons: ButtonComponent[];
+  cards: CardComponent[];
+  inputs: InputComponent[];
+  nav: NavComponent | null;
+}
+
+// ── Elevation System ──────────────────────────────────────────────────────────
+
+export interface ElevationLevel {
+  name: string; // "Flat", "Subtle", "Standard", "Elevated", "Deep"
+  level: number;
+  shadow: string;
+  usage: string; // description of when to use
 }

@@ -50,6 +50,7 @@ export async function POST(
     breakpoints: tokens.breakpoints as AggregatedTokens["breakpoints"],
     motion: tokens.motion as AggregatedTokens["motion"],
     assets: tokens.assets as AggregatedTokens["assets"],
+    components: (tokens.components as AggregatedTokens["components"]) || { buttons: [], cards: [], inputs: [], nav: null },
     conflicts: [],
   };
 

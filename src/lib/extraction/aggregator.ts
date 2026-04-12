@@ -5,6 +5,10 @@ import type {
   ColorEntry,
   TypeScaleEntry,
   SpacingPattern,
+  ComponentTokens,
+  ButtonComponent,
+  CardComponent,
+  InputComponent,
 } from "./types";
 
 /**
@@ -29,6 +33,7 @@ export function aggregateTokens(tokenSets: RawTokens[]): AggregatedTokens {
       breakpoints: t.breakpoints,
       motion: t.motion,
       assets: t.assets,
+      components: t.components,
       conflicts: [],
     };
   }
@@ -219,8 +224,45 @@ export function aggregateTokens(tokenSets: RawTokens[]): AggregatedTokens {
       })),
     },
     assets: { favicon, ogImage, logos: Array.from(logoSet) },
+    components: mergeComponents(tokenSets.map((t) => t.components)),
     conflicts,
   };
+}
+
+function mergeComponents(sets: ComponentTokens[]): ComponentTokens {
+  const seenButtons = new Set<string>();
+  const buttons: ButtonComponent[] = [];
+  const seenCards = new Set<string>();
+  const cards: CardComponent[] = [];
+  const seenInputs = new Set<string>();
+  const inputs: InputComponent[] = [];
+  let nav = sets.find((s) => s.nav)?.nav ?? null;
+
+  for (const s of sets) {
+    for (const b of s.buttons) {
+      const key = `${b.default.background}|${b.default.color}|${b.variant}`;
+      if (!seenButtons.has(key)) {
+        seenButtons.add(key);
+        buttons.push(b);
+      }
+    }
+    for (const c of s.cards) {
+      const key = `${c.styles.background}|${c.styles.borderRadius}|${c.styles.boxShadow}`;
+      if (!seenCards.has(key)) {
+        seenCards.add(key);
+        cards.push(c);
+      }
+    }
+    for (const i of s.inputs) {
+      const key = `${i.default.border}|${i.default.borderRadius}`;
+      if (!seenInputs.has(key)) {
+        seenInputs.add(key);
+        inputs.push(i);
+      }
+    }
+  }
+
+  return { buttons, cards, inputs, nav };
 }
 
 function dedupePatterns(patterns: SpacingPattern[]): SpacingPattern[] {

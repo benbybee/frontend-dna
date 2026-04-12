@@ -15,6 +15,7 @@ export const extractedTokens = pgTable("extracted_tokens", {
   breakpoints: jsonb("breakpoints").notNull(),
   motion: jsonb("motion").notNull(),
   assets: jsonb("assets").notNull(),
+  components: jsonb("components"),
   rawCssVariables: jsonb("raw_css_variables").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

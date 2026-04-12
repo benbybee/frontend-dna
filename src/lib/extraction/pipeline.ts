@@ -11,6 +11,7 @@ import { extractBorders } from "./extractors/borders";
 import { extractBreakpoints } from "./extractors/breakpoints";
 import { extractMotion } from "./extractors/motion";
 import { extractAssets } from "./extractors/assets";
+import { extractComponents } from "./extractors/components";
 import type { RawTokens } from "./types";
 
 export interface PipelineResult {
@@ -41,6 +42,7 @@ export async function runExtractionPipeline(url: string): Promise<PipelineResult
       breakpoints,
       motion,
       assets,
+      components,
     ] = await Promise.all([
       extractCssVariables(session.page),
       extractTypography(session.page),
@@ -51,6 +53,7 @@ export async function runExtractionPipeline(url: string): Promise<PipelineResult
       extractBreakpoints(session.page),
       extractMotion(session.page),
       extractAssets(session.page),
+      extractComponents(session.page),
     ]);
 
     const tokens: RawTokens = {
@@ -64,6 +67,7 @@ export async function runExtractionPipeline(url: string): Promise<PipelineResult
       breakpoints,
       motion,
       assets,
+      components,
       extractedAt: new Date().toISOString(),
     };
 

@@ -74,12 +74,16 @@ export async function POST(request: Request) {
     .values(urls.map((url) => ({ projectId: project.id, url })))
     .returning();
 
-  // Run extraction in background, then callback
+  // Run extraction in background, then callback.
+  // We run all jobs in PARALLEL (not sequentially) so multi-URL requests
+  // don't compound their durations against the 60s function budget.
+  // Each Browserbase session runs concurrently, total time ≈ max(URL times),
+  // not sum of them.
   after(async () => {
-    // Run all jobs
-    for (const job of jobs) {
-      await executeScrapeJob(job.id, job.url, project.id);
-    }
+    // Run all jobs in parallel; allSettled so one failure doesn't abort the rest
+    await Promise.allSettled(
+      jobs.map((job) => executeScrapeJob(job.id, job.url, project.id))
+    );
 
     // Gather results
     const allJobs = await db

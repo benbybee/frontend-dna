@@ -25,11 +25,25 @@ export async function runExtractionPipeline(url: string): Promise<PipelineResult
   const session = await createBrowserSession();
 
   try {
-    // Navigate to the URL and wait for the page to be fully loaded
+    // Navigate to the URL.
+    // We use "domcontentloaded" rather than "networkidle" because many sites
+    // (RotoRooter, sites with chat widgets, analytics heartbeats, etc.) keep
+    // the network active indefinitely and never reach an idle state — that
+    // would cause the page.goto call to time out before extraction even runs.
     await session.page.goto(url, {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
       timeout: 30000,
     });
+
+    // After DOM is ready, give the page a brief settle window so async CSS,
+    // fonts, and CSS-in-JS have a chance to register before we read computed
+    // styles. We don't wait for full network idle.
+    try {
+      await session.page.waitForLoadState("load", { timeout: 8000 });
+    } catch {
+      // Continue even if the load event takes too long — we have what we need.
+    }
+    await session.page.waitForTimeout(1500);
 
     // Run all extractors sequentially (they share the same page context)
     const [

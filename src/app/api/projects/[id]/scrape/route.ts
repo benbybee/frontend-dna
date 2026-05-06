@@ -40,9 +40,9 @@ export async function POST(
   }
 
   after(async () => {
-    for (const job of failedJobs) {
-      await executeScrapeJob(job.id, job.url, id);
-    }
+    await Promise.allSettled(
+      failedJobs.map((job) => executeScrapeJob(job.id, job.url, id))
+    );
   });
 
   return NextResponse.json({

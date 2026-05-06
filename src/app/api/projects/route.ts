@@ -33,11 +33,13 @@ export async function POST(request: Request) {
     .values(urls.map((url) => ({ projectId: project.id, url })))
     .returning();
 
-  // Fire-and-forget: run extraction directly (no HTTP self-request)
+  // Fire-and-forget: run extraction directly (no HTTP self-request).
+  // Jobs run in parallel so multi-URL projects don't compound durations
+  // against the 60s function budget.
   after(async () => {
-    for (const job of jobs) {
-      await executeScrapeJob(job.id, job.url, project.id);
-    }
+    await Promise.allSettled(
+      jobs.map((job) => executeScrapeJob(job.id, job.url, project.id))
+    );
   });
 
   return NextResponse.json({ project, jobs }, { status: 201 });

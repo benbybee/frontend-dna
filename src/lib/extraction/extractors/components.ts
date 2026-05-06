@@ -4,6 +4,28 @@ import type { ComponentTokens } from "../types";
 export async function extractComponents(page: Page): Promise<ComponentTokens> {
   return page.evaluate(() => {
     // ── Helpers ──────────────────────────────────────────────────────
+    // SVG elements have className typed as SVGAnimatedString (not a plain
+    // string), so .split() throws. Use this helper everywhere we need a
+    // class string from any element type.
+    function getClassString(el: Element): string {
+      const cn = (el as HTMLElement).className;
+      if (typeof cn === "string") return cn;
+      // SVGAnimatedString has .baseVal
+      if (cn && typeof cn === "object" && "baseVal" in cn) {
+        return (cn as SVGAnimatedString).baseVal || "";
+      }
+      // Fallback to getAttribute (works for any element)
+      return el.getAttribute("class") || "";
+    }
+
+    function buildSelector(el: Element): string {
+      const tag = el.tagName.toLowerCase();
+      const cls = getClassString(el).trim();
+      if (!cls) return tag;
+      const firstClass = cls.split(/\s+/)[0];
+      return firstClass ? `${tag}.${firstClass}` : tag;
+    }
+
     function getStyles(el: Element) {
       const s = getComputedStyle(el);
       return {
@@ -66,7 +88,7 @@ export async function extractComponents(page: Page): Promise<ComponentTokens> {
       const variant = classifyButtonVariant(styles);
       buttons.push({
         variant,
-        selector: el.tagName.toLowerCase() + (el.className ? `.${el.className.split(" ")[0]}` : ""),
+        selector: buildSelector(el),
         default: styles,
         text: (el.textContent || "").trim().substring(0, 40),
       });
@@ -87,7 +109,7 @@ export async function extractComponents(page: Page): Promise<ComponentTokens> {
       seenCardStyles.add(key);
 
       cards.push({
-        selector: el.tagName.toLowerCase() + (el.className ? `.${el.className.split(" ")[0]}` : ""),
+        selector: buildSelector(el),
         styles,
       });
     }
@@ -109,7 +131,7 @@ export async function extractComponents(page: Page): Promise<ComponentTokens> {
       const inputEl = el as HTMLInputElement;
       inputs.push({
         type: inputEl.type || el.tagName.toLowerCase(),
-        selector: el.tagName.toLowerCase() + (el.className ? `.${el.className.split(" ")[0]}` : ""),
+        selector: buildSelector(el),
         default: styles,
         placeholder: inputEl.placeholder || "",
       });

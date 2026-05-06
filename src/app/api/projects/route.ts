@@ -3,9 +3,8 @@ import { after } from "next/server";
 import { db } from "@/db";
 import { projects, scrapeJobs } from "@/db/schema";
 import { createProjectSchema } from "@/lib/validators";
-import { getAuthUserId } from "@/lib/auth";
+import { getAuthUserId, projectOwnerFilter } from "@/lib/auth";
 import { executeScrapeJob } from "@/lib/scrape-job";
-import { eq, or } from "drizzle-orm";
 
 export async function POST(request: Request) {
   const userId = await getAuthUserId();
@@ -49,7 +48,7 @@ export async function GET() {
   const userId = await getAuthUserId();
 
   const userProjects = await db.query.projects.findMany({
-    where: or(eq(projects.userId, userId), eq(projects.userId, "webhook")),
+    where: projectOwnerFilter(userId),
     orderBy: (p, { desc }) => [desc(p.createdAt)],
     with: {
       scrapeJobs: {

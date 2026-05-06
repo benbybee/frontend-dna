@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { projects } from "@/db/schema";
-import { getAuthUserId } from "@/lib/auth";
-import { eq, and, or } from "drizzle-orm";
+import { getAuthUserId, projectOwnerFilter } from "@/lib/auth";
+import { eq, and } from "drizzle-orm";
 
 export async function GET(
   _request: Request,
@@ -12,7 +12,7 @@ export async function GET(
   const { id } = await params;
 
   const project = await db.query.projects.findFirst({
-    where: and(eq(projects.id, id), or(eq(projects.userId, userId), eq(projects.userId, "webhook"))),
+    where: and(eq(projects.id, id), projectOwnerFilter(userId)),
     with: {
       scrapeJobs: true,
       extractedTokens: true,
@@ -39,7 +39,7 @@ export async function DELETE(
 
   const deleted = await db
     .delete(projects)
-    .where(and(eq(projects.id, id), or(eq(projects.userId, userId), eq(projects.userId, "webhook"))))
+    .where(and(eq(projects.id, id), projectOwnerFilter(userId)))
     .returning();
 
   if (deleted.length === 0) {

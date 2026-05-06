@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { projects, extractedTokens, generatedPrompts } from "@/db/schema";
-import { getAuthUserId } from "@/lib/auth";
+import { getAuthUserId, projectOwnerFilter } from "@/lib/auth";
 import { eq, and, desc } from "drizzle-orm";
 import { generateMarkdown } from "@/lib/prompt-generator/generate-markdown";
 import type { AggregatedTokens } from "@/lib/extraction/types";
@@ -14,7 +14,7 @@ export async function POST(
   const { id } = await params;
 
   const project = await db.query.projects.findFirst({
-    where: and(eq(projects.id, id), eq(projects.userId, userId)),
+    where: and(eq(projects.id, id), projectOwnerFilter(userId)),
   });
 
   if (!project) {
